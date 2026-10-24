@@ -79,7 +79,11 @@ const Exams = () => {
                     {exam.level}
                   </span>
                 </div>
-                <h3 className="mt-3 text-lg font-bold text-dark">{exam.name}</h3>
+                <h3 className="mt-3 text-lg font-bold text-dark">
+                  <Link to={`/exams/${exam.slug}`} className="hover:text-primary">
+                    {exam.name}
+                  </Link>
+                </h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
                   {exam.fullName}
                 </p>
@@ -113,9 +117,12 @@ const Exams = () => {
                   </div>
                 </div>
 
-                <button className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary hover:text-primary">
+                <Link
+                  to={`/exams/${exam.slug}`}
+                  className="mt-5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-primary hover:text-primary"
+                >
                   Exam details <ArrowRight className="h-4 w-4" />
-                </button>
+                </Link>
               </div>
             ))}
           </div>
@@ -143,7 +150,12 @@ const Exams = () => {
                 {exams.map((exam) => (
                   <tr key={exam.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-dark">{exam.name}</p>
+                      <Link
+                        to={`/exams/${exam.slug}`}
+                        className="font-semibold text-dark hover:text-primary"
+                      >
+                        {exam.name}
+                      </Link>
                       <p className="text-xs text-slate-500">{exam.category}</p>
                     </td>
                     <td className="px-6 py-4 text-slate-600">{exam.applyStart}</td>

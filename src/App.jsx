@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import CollegeDetail from "./pages/CollegeDetail";
 import CourseDetail from "./pages/CourseDetail";
+import ExamDetail from "./pages/ExamDetail";
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
               <Route path="/colleges" element={<Colleges />} />
               <Route path="/colleges/:id" element={<CollegeDetail />} />
               <Route path="/exams" element={<Exams />} />
+              <Route path="/exams/:slug" element={<ExamDetail />} />
               <Route path="/articles" element={<Articles />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />

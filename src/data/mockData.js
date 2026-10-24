@@ -224,28 +224,29 @@ export const colleges = [
       "India's most prestigious law school, producing judges, policy makers and top corporate lawyers through a rigorous five-year programme.",
   },
   {
-    id: "col6",
-    name: "Birla Institute of Technology and Science",
-    shortName: "BITS Pilani",
-    location: "Pilani, Rajasthan",
-    type: "Private",
+    id: "col7",
+    name: "Indian Institute of Technology Patna",
+    shortName: "IIT Patna",
+    location: "Patna, Bihar",
+    type: "Government",
     rating: 4.6,
-    reviews: 890,
-    courses: ["B.Tech", "M.Tech", "MBA", "Ph.D"],
-    nirfRank: 28,
-    fees: "₹4,20,000 / year",
-    established: 1964,
-    examsAccepted: ["BITSAT", "GATE", "CAT"],
+    reviews: 312,
+    courses: ["B.Tech", "M.Tech", "MBA/PGDM", "Ph.D"],
+    nirfRank: 41,
+    fees: "₹10,00,000 / programme",
+    established: 2008,
+    examsAccepted: ["JEE Advanced", "JEE Main", "CAT"],
     image:
-      "https://images.unsplash.com/photo-1492538368677-f6e0afe31dcc?auto=format&fit=crop&w=800&q=70",
+      "https://images.unsplash.com/photo-1592280771190-3e2e4d571952?auto=format&fit=crop&w=800&q=70",
     description:
-      "A leading private institute with a strong technical curriculum, active industry links and a flagship work-integrated learning programme.",
+      "IIT Patna is an institute of national importance known for its engineering, science and management programmes. The institute offers an executive MBA as well as five-year integrated B.Tech + MBA programmes in partnership with leading IIMs, with strong research and placement outcomes.",
   },
 ];
 
 export const exams = [
   {
     id: "e1",
+    slug: "jee-main",
     name: "JEE Main",
     fullName: "Joint Entrance Examination (Main)",
     conductingBody: "National Testing Agency",
@@ -260,6 +261,7 @@ export const exams = [
   },
   {
     id: "e2",
+    slug: "neet-ug",
     name: "NEET UG",
     fullName: "National Eligibility cum Entrance Test (UG)",
     conductingBody: "National Testing Agency",
@@ -274,11 +276,12 @@ export const exams = [
   },
   {
     id: "e3",
+    slug: "cat",
     name: "CAT",
     fullName: "Common Admission Test",
     conductingBody: "Indian Institutes of Management",
     category: "Management",
-    examDate: "NA",
+    examDate: "28 Nov 2027",
     applyStart: "01 Aug 2027",
     applyEnd: "20 Sep 2027",
     level: "Postgraduate",
@@ -288,6 +291,7 @@ export const exams = [
   },
   {
     id: "e4",
+    slug: "clat",
     name: "CLAT",
     fullName: "Common Law Admission Test",
     conductingBody: "Consortium of NLUs",
@@ -299,6 +303,21 @@ export const exams = [
     applicationFee: "₹4,000",
     image:
       "https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=800&q=70",
+  },
+  {
+    id: "e5",
+    slug: "jee-advanced",
+    name: "JEE Advanced",
+    fullName: "Joint Entrance Examination (Advanced)",
+    conductingBody: "Indian Institutes of Technology",
+    category: "Engineering",
+    examDate: "18 May 2027",
+    applyStart: "30 Apr 2027",
+    applyEnd: "08 May 2027",
+    level: "Undergraduate",
+    applicationFee: "₹3,200",
+    image:
+      "https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=70",
   },
 ];
 

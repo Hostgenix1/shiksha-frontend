@@ -164,7 +164,7 @@ const Home = () => (
           {exams.map((exam) => (
             <Link
               key={exam.id}
-              to="/exams"
+              to={`/exams/${exam.slug}`}
               className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-primary/30 hover:shadow-md"
             >
               <div className="flex items-center justify-between">
