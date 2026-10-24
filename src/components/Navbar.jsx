@@ -1,188 +1,215 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, Search, GraduationCap, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Menu,
+  X,
+  GraduationCap,
+  Phone,
+  Mail,
+  ArrowRight,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+const navLinks = [
+  { label: "Home", path: "/" },
+  { label: "Colleges", path: "/colleges" },
+  { label: "Courses", path: "/courses" },
+  { label: "Exams", path: "/exams" },
+  { label: "Articles", path: "/articles" },
+];
+
 const Navbar = () => {
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) =>
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
-  const navLinks = [
-    { label: "होम", path: "/" },
-    { label: "कोर्सेज़", path: "/courses" },
-    { label: "कॉलेजेस", path: "/colleges" },
-    { label: "एग्जाम्स", path: "/exams" },
-    { label: "आर्टिकल्स", path: "/articles" },
-  ];
+  const submitSearch = (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    navigate(`/courses?search=${encodeURIComponent(query.trim())}`);
+    setMobileOpen(false);
+  };
 
   return (
     <>
-      {/* Top Bar */}
-      <div className="bg-dark text-white px-6 py-1.5 text-sm flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-            <span className="text-primary">📞</span>
-            1800-123-4567
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="text-secondary">✉️</span>
-            support@shiksha.com
-          </span>
-        </div>
-        <div className="flex items-center gap-4">
-          {user ? (
-            <>
-              <span>नमस्ते, {user.name}</span>
-              <button
-                onClick={logout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-md text-sm transition"
-              >
-                लॉगआउट
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="bg-white text-dark px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-100 transition"
-              >
-                लॉगिन
-              </Link>
-              <Link
-                to="/signup"
-                className="bg-primary text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-opacity-90 transition"
-              >
-                साइन अप
-              </Link>
-            </>
-          )}
+      {/* Utility bar */}
+      <div className="bg-dark text-slate-300">
+        <div className="container-x flex h-9 items-center justify-between text-xs">
+          <div className="flex items-center gap-5">
+            <span className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-accent" /> 1800 123 4567
+            </span>
+            <span className="hidden items-center gap-1.5 sm:flex">
+              <Mail className="h-3.5 w-3.5 text-accent" /> support@shiksha.com
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link to="/colleges" className="hidden hover:text-white sm:inline">
+              For Colleges
+            </Link>
+            {user ? (
+              <>
+                <span className="hidden text-slate-400 sm:inline">
+                  Hi, <span className="font-medium text-white">{user.name}</span>
+                </span>
+                <button
+                  onClick={logout}
+                  className="rounded-md bg-white/10 px-3 py-1 font-medium text-white transition hover:bg-white/20"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="hover:text-white">
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="rounded-md bg-accent px-3 py-1 font-semibold text-white transition hover:bg-accent-dark"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
-            <Link
-              to="/"
-              className="flex items-center gap-2"
-              onClick={() => setMobileMenu(false)}
-            >
-              <GraduationCap className="w-8 h-8 text-primary" />
-              <span className="text-xl font-bold text-dark tracking-tight">
-                Shiksha<span className="text-primary">.com</span>
-              </span>
-            </Link>
+      {/* Main nav */}
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="container-x flex h-16 items-center gap-6">
+          <Link
+            to="/"
+            className="flex shrink-0 items-center gap-2.5"
+            onClick={() => setMobileOpen(false)}
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </span>
+            <span className="text-xl font-extrabold tracking-tight text-dark">
+              Shiksha<span className="text-primary">.com</span>
+            </span>
+          </Link>
 
-            <div className="hidden md:flex items-center gap-1 text-sm font-medium">
-              {navLinks.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-4 py-2 rounded-md transition ${
-                    isActive(item.path)
-                      ? "bg-primary text-white"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-primary"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSearchOpen(!searchOpen)}
-                className="p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-md transition"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-              <button
-                className="md:hidden p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-md transition"
-                onClick={() => setMobileMenu(!mobileMenu)}
-                aria-label="Menu"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {searchOpen && (
-          <div className="bg-white border-b border-gray-200 px-6 py-3">
-            <div className="max-w-7xl mx-auto relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="कोर्स, कॉलेज या एग्जाम खोजें..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-              <button
-                onClick={() => setSearchOpen(false)}
-                className="absolute right-3 top-3 text-gray-600 hover:text-primary"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {mobileMenu && (
-        <div className="md:hidden bg-white border-t border-gray-200">
-          <div className="px-6 py-4 space-y-3">
+          <nav className="hidden items-center gap-1 lg:flex">
             {navLinks.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={() => setMobileMenu(false)}
-                className={`block px-4 py-3 rounded-lg transition ${
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
                   isActive(item.path)
-                    ? "bg-primary text-white"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-primary"
+                    ? "bg-primary/10 text-primary"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-dark"
                 }`}
               >
                 {item.label}
               </Link>
             ))}
-            <div className="pt-4 border-t border-gray-100">
-              {user ? (
-                <button
-                  onClick={() => {
-                    logout();
-                    setMobileMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-lg transition"
+          </nav>
+
+          <form
+            onSubmit={submitSearch}
+            className="ml-auto hidden max-w-xs flex-1 items-center md:flex"
+          >
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search colleges, courses, exams"
+                className="w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm text-slate-700 placeholder-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+              />
+            </div>
+          </form>
+
+          <Link
+            to="/signup"
+            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark md:inline-flex"
+          >
+            Free Counselling <ArrowRight className="h-4 w-4" />
+          </Link>
+
+          <button
+            className="ml-auto rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="border-t border-slate-200 bg-white lg:hidden">
+            <div className="container-x space-y-1 py-4">
+              <form onSubmit={submitSearch} className="mb-3 md:hidden">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search colleges, courses, exams"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm focus:border-primary focus:bg-white focus:outline-none"
+                  />
+                </div>
+              </form>
+              {navLinks.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileOpen(false)}
+                  className={`block rounded-lg px-3 py-2.5 text-sm font-medium ${
+                    isActive(item.path)
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-700 hover:bg-slate-100"
+                  }`}
                 >
-                  लॉगआउट
-                </button>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMobileMenu(false)}
-                    className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition"
+                  {item.label}
+                </Link>
+              ))}
+              <div className="flex gap-3 pt-3">
+                {user ? (
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileOpen(false);
+                    }}
+                    className="btn-outline flex-1"
                   >
-                    लॉगिन
-                  </Link>
-                  <Link
-                    to="/signup"
-                    onClick={() => setMobileMenu(false)}
-                    className="block px-4 py-3 text-white bg-primary font-medium hover:bg-opacity-90 rounded-lg transition"
-                  >
-                    साइन अप
-                  </Link>
-                </>
-              )}
+                    Log out
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="btn-outline flex-1"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="btn-primary flex-1"
+                    >
+                      Sign up
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </header>
     </>
   );
 };

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Courses from "./pages/Courses";
 import Colleges from "./pages/Colleges";
@@ -17,6 +18,7 @@ const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ScrollToTop />
         <div className="min-h-screen bg-white text-dark">
           <Navbar />
           <main>

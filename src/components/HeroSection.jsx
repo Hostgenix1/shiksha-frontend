@@ -1,67 +1,161 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  ArrowRight,
+  Building2,
+  BookOpen,
+  CalendarDays,
+  Star,
+  Users,
+  TrendingUp,
+} from "lucide-react";
+
+const tabs = [
+  { key: "colleges", label: "Colleges", icon: Building2, placeholder: "Search by college name, city or stream" },
+  { key: "courses", label: "Courses", icon: BookOpen, placeholder: "Search courses like B.Tech, MBA, MBBS" },
+  { key: "exams", label: "Exams", icon: CalendarDays, placeholder: "Search exams like JEE Main, NEET, CAT" },
+];
+
+const popular = ["B.Tech", "MBBS", "MBA", "Law", "Design", "Commerce"];
 
 const HeroSection = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("colleges");
+  const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+
+  const active = tabs.find((tab) => tab.key === activeTab);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/courses?search=${encodeURIComponent(searchQuery)}`;
+    const q = query.trim();
+    if (activeTab === "colleges") {
+      navigate(q ? `/colleges?search=${encodeURIComponent(q)}` : "/colleges");
+    } else if (activeTab === "courses") {
+      navigate(q ? `/courses?search=${encodeURIComponent(q)}` : "/courses");
+    } else {
+      navigate(q ? `/exams?search=${encodeURIComponent(q)}` : "/exams");
     }
   };
 
   return (
-    <section className="relative bg-gradient-to-br from-primary to-dark text-white overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-80 h-80 bg-secondary/20 rounded-full blur-3xl" />
-      </div>
+    <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-b from-blue-50/70 via-white to-white">
+      <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 top-40 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
 
-      <div className="max-w-7xl mx-auto px-6 py-16 relative z-10">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-primary mb-6 text-sm font-medium">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            नए एडमिशन खुले हैं 2026-27 के लिए
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-            अपने करियर का सही रास्ता चुनें
+      <div className="container-x relative grid items-center gap-12 py-14 lg:grid-cols-12 lg:py-20">
+        {/* Copy + search */}
+        <div className="lg:col-span-7">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-semibold text-primary shadow-sm">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+            Admissions open for 2027 intake
+          </span>
+
+          <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight text-dark sm:text-5xl">
+            Find the right college.
+            <br />
+            Build the <span className="text-primary">right future.</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed">
-            भारत के टॉप कॉलेजेस, कोर्सेज़ और एग्जाम्स की पूरी जानकारी एक ही जगह। अपना सपना पूरा करें।
+
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600">
+            Compare 5,000+ colleges, explore 50,000+ courses and track every entrance
+            exam — with expert counselling at no cost.
           </p>
 
-          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3 max-w-4xl mx-auto">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="कोर्स, कॉलेज या एग्जाम खोजें..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 transition"
-              />
+          {/* Search card */}
+          <div className="mt-8 max-w-2xl rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-200/60">
+            <div className="flex gap-1 border-b border-slate-100 pb-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                    activeTab === tab.key
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-dark"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              ))}
             </div>
-            <button
-              type="submit"
-              className="bg-white text-primary px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center gap-2 justify-center"
-            >
-              खोजें <Search className="w-5 h-5" />
-            </button>
-          </form>
 
-          <div className="mt-12 flex flex-wrap justify-center gap-6 text-center">
-            <div className="px-4 py-3 bg-white/10 backdrop-blur rounded-xl border border-white/10">
-              <div className="text-2xl font-bold">50k+</div>
-              <div className="text-sm text-gray-300">कोर्सेज़</div>
+            <form onSubmit={handleSearch} className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={active.placeholder}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                />
+              </div>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-primary-dark"
+              >
+                Search <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+
+          {/* Popular searches */}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-slate-500">Popular:</span>
+            {popular.map((item) => (
+              <button
+                key={item}
+                onClick={() => navigate(`/courses?search=${encodeURIComponent(item)}`)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-primary hover:text-primary"
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Visual */}
+        <div className="relative hidden lg:col-span-5 lg:block">
+          <div className="relative overflow-hidden rounded-3xl border border-slate-200 shadow-2xl shadow-slate-300/50">
+            <img
+              src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=75"
+              alt="Students on a college campus"
+              className="h-[420px] w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-transparent" />
+            <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-white/95 p-4 backdrop-blur">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Trusted by students
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-dark">1M+ students guided</p>
+                </div>
+                <div className="flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-2 text-sm font-bold text-amber-600">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" /> 4.8
+                </div>
+              </div>
             </div>
-            <div className="px-4 py-3 bg-white/10 backdrop-blur rounded-xl border border-white/10">
-              <div className="text-2xl font-bold">5k+</div>
-              <div className="text-sm text-gray-300">कॉलेजेस</div>
+          </div>
+
+          <div className="absolute -left-8 top-10 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-600">
+              <Users className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-dark">5,000+</p>
+              <p className="text-xs text-slate-500">Colleges listed</p>
             </div>
-            <div className="px-4 py-3 bg-white/10 backdrop-blur rounded-xl border border-white/10">
-              <div className="text-2xl font-bold">100+</div>
-              <div className="text-sm text-gray-300">एग्जाम्स</div>
+          </div>
+
+          <div className="absolute -right-4 bottom-24 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-lg">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-primary">
+              <TrendingUp className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-dark">50,000+</p>
+              <p className="text-xs text-slate-500">Courses to explore</p>
             </div>
           </div>
         </div>

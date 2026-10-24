@@ -1,7 +1,22 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  GraduationCap,
+  CheckCircle2,
+  ArrowRight,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+
+const benefits = [
+  "Save and compare colleges side by side",
+  "Get personalised course recommendations",
+  "Receive exam and admission deadline alerts",
+];
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -21,12 +36,11 @@ const Signup = () => {
     setError("");
 
     if (!formData.name || !formData.email || !formData.password) {
-      setError("कृपया सभी विवरण भरें");
+      setError("Please fill in all fields.");
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
-      setError("पासवर्ड मेल नहीं खाते");
+      setError("Passwords do not match.");
       return;
     }
 
@@ -34,117 +48,159 @@ const Signup = () => {
     setTimeout(() => {
       login({ name: formData.name, email: formData.email });
       navigate("/dashboard");
-    }, 800);
+    }, 600);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-secondary">
-            <User className="w-7 h-7 text-white" />
+    <div className="min-h-[calc(100vh-6.25rem)] bg-slate-50">
+      <div className="container-x grid items-center gap-10 py-12 lg:grid-cols-2 lg:py-16">
+        {/* Left panel */}
+        <div className="hidden lg:block">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-dark via-slate-900 to-primary-dark p-10 text-white">
+            <div className="pointer-events-none absolute -right-16 -bottom-16 h-56 w-56 rounded-full bg-accent/20 blur-2xl" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+              <GraduationCap className="h-6 w-6" />
+            </span>
+            <h1 className="mt-6 text-3xl font-extrabold leading-tight">
+              Your admission journey starts here
+            </h1>
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-300">
+              Create a free account to plan your studies with confidence — no fees, no
+              spam.
+            </p>
+            <ul className="mt-8 space-y-3 text-sm">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-400" />
+                  <span className="text-slate-200">{benefit}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-dark">खाता बनाएं</h2>
-          <p className="mt-2 text-sm text-gray-600">शुरुआत करने के लिए अपना खाता बनाएं</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-              {error}
-            </div>
-          )}
+        {/* Form */}
+        <div className="mx-auto w-full max-w-md">
+          <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm sm:p-8">
+            <h2 className="text-2xl font-extrabold tracking-tight text-dark">
+              Create your free account
+            </h2>
+            <p className="mt-1.5 text-sm text-slate-500">
+              Already registered?{" "}
+              <Link to="/login" className="font-semibold text-primary hover:underline">
+                Log in
+              </Link>
+            </p>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">पूरा नाम</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="input-field pl-10"
-                  placeholder="राम शर्मा"
-                />
+            {error && (
+              <div className="mt-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ईमेल एड्रेस</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="input-field pl-10"
-                  placeholder="name@example.com"
-                />
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Full name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="input-field pl-10"
+                    placeholder="Your full name"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <div className="flex justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">पासवर्ड</label>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  {showPassword ? "छिपाएं" : "दिखाएं"}
-                </button>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Email address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="input-field pl-10"
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="input-field pl-10"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                पासवर्ड की पुष्टि करें
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
-                  }
-                  className="input-field pl-10"
-                  placeholder="••••••••"
-                />
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700">Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    {showPassword ? (
+                      <>
+                        <EyeOff className="h-3.5 w-3.5" /> Hide
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-3.5 w-3.5" /> Show
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="input-field pl-10"
+                    placeholder="Create a password"
+                  />
+                </div>
               </div>
-            </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Confirm password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({ ...formData, confirmPassword: e.target.value })
+                    }
+                    className="input-field pl-10"
+                    placeholder="Re-enter your password"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary mt-2 w-full disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Creating account..." : "Create account"}
+                {!loading && <ArrowRight className="h-4 w-4" />}
+              </button>
+            </form>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-3 rounded-md text-sm font-medium text-white bg-primary hover:bg-opacity-90 disabled:opacity-50 transition"
-          >
-            {loading ? "प्रोसेस हो रहा है..." : "खाता बनाएं"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600">
-          पहले से खाता है?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
-            लॉगिन करें
-          </Link>
-        </p>
+        </div>
       </div>
     </div>
   );
