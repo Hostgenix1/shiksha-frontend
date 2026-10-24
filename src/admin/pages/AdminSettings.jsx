@@ -60,7 +60,7 @@ const ToggleRow = ({ title, description, checked, onChange, disabled = false }) 
 
 const AdminSettings = () => {
   const { admin } = useAdminAuth();
-  const { settings, updateSettings, resetDemoData, notify } = useAdminData();
+  const { settings, updateSettings, resetDemoData, notify, remote } = useAdminData();
   const [form, setForm] = useState({ ...settings });
 
   const saveSettings = (event) => {
@@ -72,13 +72,15 @@ const AdminSettings = () => {
   const handleReset = () => {
     if (
       !window.confirm(
-        "Reset all demo leads, students, applications, invoices and catalog changes to the original seed data?"
+        remote
+          ? "Reload the workspace from Supabase? Local edits that were not saved to the cloud will be discarded."
+          : "Reset all demo leads, students, applications, invoices and catalog changes to the original seed data?"
       )
     ) {
       return;
     }
     resetDemoData();
-    setForm({ ...seedSettings });
+    if (!remote) setForm({ ...seedSettings });
   };
 
   const integrations = [
@@ -95,24 +97,35 @@ const AdminSettings = () => {
       ),
     },
     {
-      name: "Admin demo store",
-      description: "Browser localStorage persistence for this preview",
-      status: "Active",
-      tone: "blue",
+      name: remote ? "Supabase Postgres" : "Admin demo store",
+      description: remote
+        ? "Cloud database with row-level security policies"
+        : "Browser localStorage persistence for this preview",
+      status: remote ? "Connected" : "Active",
+      tone: remote ? "emerald" : "blue",
       icon: Database,
       action: (
-        <span className="text-[10px] font-semibold text-slate-400">Local only</span>
+        <span className="text-[10px] font-semibold text-slate-400">
+          {remote ? "Postgres + RLS" : "Local only"}
+        </span>
       ),
     },
     {
-      name: "Supabase Auth & Postgres",
-      description: "Multi-user auth, database and row-level security",
-      status: "Not configured",
-      tone: "amber",
+      name: "Supabase Auth",
+      description: remote
+        ? "Staff accounts, sessions and email/password sign-in"
+        : "Multi-user auth activates when env vars are configured",
+      status: remote ? "Connected" : "Not configured",
+      tone: remote ? "emerald" : "amber",
       icon: Server,
       action: (
-        <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">
-          Next phase
+        <span
+          className={cn(
+            "rounded-full px-2 py-1 text-[10px] font-bold",
+            remote ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+          )}
+        >
+          {remote ? "Live" : "Next phase"}
         </span>
       ),
     },
@@ -264,7 +277,9 @@ const AdminSettings = () => {
                   <span className="flex items-center gap-1.5 text-slate-500">
                     <UserRound className="h-3.5 w-3.5" /> Profile
                   </span>
-                  <span className="font-semibold text-dark">Demo session</span>
+                  <span className="font-semibold text-dark">
+                    {remote ? "Supabase user" : "Demo session"}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex items-center gap-1.5 text-slate-500">
@@ -276,7 +291,9 @@ const AdminSettings = () => {
                   <span className="flex items-center gap-1.5 text-slate-500">
                     <Lock className="h-3.5 w-3.5" /> Authentication
                   </span>
-                  <span className="font-semibold text-amber-600">Prototype login</span>
+                  <span className={cn("font-semibold", remote ? "text-emerald-600" : "text-amber-600")}>
+                    {remote ? "Supabase Auth" : "Prototype login"}
+                  </span>
                 </div>
               </div>
               <Link
@@ -300,14 +317,14 @@ const AdminSettings = () => {
                 {
                   icon: Database,
                   label: "Data persistence",
-                  value: "Browser store",
-                  tone: "text-blue-600",
+                  value: remote ? "Supabase Postgres" : "Browser store",
+                  tone: remote ? "text-emerald-600" : "text-blue-600",
                 },
                 {
                   icon: Server,
                   label: "Backend",
-                  value: "Demo mode",
-                  tone: "text-amber-600",
+                  value: remote ? "Supabase" : "Demo mode",
+                  tone: remote ? "text-emerald-600" : "text-amber-600",
                 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-3 px-5 py-3.5">
@@ -321,14 +338,22 @@ const AdminSettings = () => {
             </div>
           </SectionCard>
 
-          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <div
+            className={cn(
+              "rounded-xl border p-4",
+              remote ? "border-emerald-100 bg-emerald-50/60" : "border-blue-100 bg-blue-50/60"
+            )}
+          >
             <p className="flex items-center gap-1.5 text-xs font-bold text-dark">
-              <ShieldCheck className="h-4 w-4 text-primary" /> Demo data notice
+              <ShieldCheck
+                className={cn("h-4 w-4", remote ? "text-emerald-600" : "text-primary")}
+              />{" "}
+              {remote ? "Cloud workspace" : "Demo data notice"}
             </p>
             <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">
-              This admin panel is a fully interactive product preview. Records live in
-              your browser and are not shared across devices yet. Supabase Auth,
-              Postgres and RLS are the recommended next step for a production rollout.
+              {remote
+                ? "This workspace is connected to Supabase. Data is stored in Postgres with row-level security, and every change is written through to the cloud."
+                : "This admin panel is a fully interactive product preview. Records live in your browser and are not shared across devices yet. Supabase Auth, Postgres and RLS are the recommended next step for a production rollout."}
             </p>
           </div>
         </aside>
@@ -372,15 +397,17 @@ const AdminSettings = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="flex items-center gap-2 text-sm font-bold text-dark">
-              <RefreshCw className="h-4 w-4 text-rose-500" /> Reset demo workspace
+              <RefreshCw className="h-4 w-4 text-rose-500" />{" "}
+              {remote ? "Reload cloud workspace" : "Reset demo workspace"}
             </h2>
             <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">
-              Restore every lead, student, application, invoice, catalog record and
-              setting to the original seed. This only affects this browser.
+              {remote
+                ? "Re-read every table from Supabase. Cloud records are never deleted from the browser."
+                : "Restore every lead, student, application, invoice, catalog record and setting to the original seed. This only affects this browser."}
             </p>
           </div>
           <AdminButton variant="danger" onClick={handleReset} className="shrink-0">
-            <RefreshCw className="h-4 w-4" /> Reset data
+            <RefreshCw className="h-4 w-4" /> {remote ? "Reload data" : "Reset data"}
           </AdminButton>
         </div>
       </div>

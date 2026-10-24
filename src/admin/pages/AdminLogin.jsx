@@ -24,33 +24,43 @@ const highlights = [
 ];
 
 const AdminLogin = () => {
-  const { admin, login, demoLogin } = useAdminAuth();
+  const { admin, login, demoLogin, authLoading, supabaseReady } = useAdminAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <p className="text-sm font-medium text-slate-500">Checking your session…</p>
+      </div>
+    );
+  }
+
   if (admin) return <Navigate to="/admin/dashboard" replace />;
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     setError("");
     setLoading(true);
-    window.setTimeout(() => {
-      const result = login(form.email, form.password);
-      if (result.ok) {
-        navigate("/admin/dashboard");
-      } else {
-        setError(result.error);
-        setLoading(false);
-      }
-    }, 350);
+    const result = await login(form.email, form.password);
+    if (result?.ok) {
+      navigate("/admin/dashboard");
+    } else {
+      setError(result?.error || "Sign in failed. Please try again.");
+      setLoading(false);
+    }
   };
 
-  const enterDemo = () => {
-    demoLogin();
-    navigate("/admin/dashboard");
+  const enterDemo = async () => {
+    const result = await demoLogin();
+    if (result?.ok) {
+      navigate("/admin/dashboard");
+    } else {
+      setError(result?.error || "Demo access is unavailable.");
+    }
   };
 
   const fillDemo = () => {
@@ -134,7 +144,7 @@ const AdminLogin = () => {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to website
           </Link>
           <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Demo workspace
+            {supabaseReady ? "Cloud workspace" : "Demo workspace"}
           </span>
         </div>
 
@@ -158,7 +168,9 @@ const AdminLogin = () => {
               Sign in to your workspace
             </h2>
             <p className="mt-1.5 text-sm text-slate-500">
-              Use the demo account below to explore the complete admin experience.
+              {supabaseReady
+                ? "Sign in with your Supabase staff account to open the live workspace."
+                : "Use the demo account below to explore the complete admin experience."}
             </p>
 
             <form onSubmit={submit} className="mt-6 space-y-4">
@@ -218,34 +230,51 @@ const AdminLogin = () => {
               </AdminButton>
             </form>
 
-            <div className="my-5 flex items-center gap-3">
-              <span className="h-px flex-1 bg-slate-200" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Demo access
-              </span>
-              <span className="h-px flex-1 bg-slate-200" />
-            </div>
+            {supabaseReady ? (
+              <div className="mt-5 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/60 p-4">
+                <p className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Supabase
+                  connected
+                </p>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">
+                  Auth and Postgres are live for this workspace. Accounts are managed in
+                  your Supabase project (Authentication → Users).
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="my-5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-slate-200" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Demo access
+                  </span>
+                  <span className="h-px flex-1 bg-slate-200" />
+                </div>
 
-            <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/60 p-4">
-              <p className="text-xs font-bold text-slate-700">Demo credentials</p>
-              <div className="mt-2 space-y-1 font-mono text-[11px] text-slate-600">
-                <p>admin@shiksha.com</p>
-                <p>admin123</p>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <AdminButton type="button" variant="outline" size="sm" onClick={fillDemo}>
-                  Fill credentials
-                </AdminButton>
-                <AdminButton type="button" variant="amber" size="sm" onClick={enterDemo}>
-                  Open demo dashboard <ArrowRight className="h-3.5 w-3.5" />
-                </AdminButton>
-              </div>
-            </div>
+                <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/60 p-4">
+                  <p className="text-xs font-bold text-slate-700">Demo credentials</p>
+                  <div className="mt-2 space-y-1 font-mono text-[11px] text-slate-600">
+                    <p>admin@shiksha.com</p>
+                    <p>admin123</p>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <AdminButton type="button" variant="outline" size="sm" onClick={fillDemo}>
+                      Fill credentials
+                    </AdminButton>
+                    <AdminButton type="button" variant="amber" size="sm" onClick={enterDemo}>
+                      Open demo dashboard <ArrowRight className="h-3.5 w-3.5" />
+                    </AdminButton>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
-            <ShieldCheck className="h-3.5 w-3.5" /> Protected demo workspace. No real
-            student data is used.
+            <ShieldCheck className="h-3.5 w-3.5" />{" "}
+            {supabaseReady
+              ? "Protected by Supabase Auth and row-level security."
+              : "Protected demo workspace. No real student data is used."}
           </p>
         </div>
       </section>

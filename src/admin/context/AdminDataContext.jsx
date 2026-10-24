@@ -8,6 +8,23 @@ import {
 } from "react";
 import { seedAdminData } from "../data/seedData";
 import { nowLabel } from "../lib/utils";
+import { supabaseReady } from "../lib/supabaseClient";
+import { useAdminAuth } from "./AdminAuthContext";
+import {
+  fetchAdminData,
+  saveLead as saveLeadRemote,
+  saveTask as saveTaskRemote,
+  saveStudent as saveStudentRemote,
+  saveApplication as saveApplicationRemote,
+  saveInvoice as saveInvoiceRemote,
+  savePayment as savePaymentRemote,
+  saveCatalogItem as saveCatalogItemRemote,
+  deleteCatalogItem as deleteCatalogItemRemote,
+  saveContent as saveContentRemote,
+  saveProfile as saveProfileRemote,
+  updateProfile as updateProfileRemote,
+  saveSettings as saveSettingsRemote,
+} from "../data/supabaseRepo";
 
 const AdminDataContext = createContext(null);
 const STORAGE_KEY = "shiksha_admin_data_v1";
@@ -26,6 +43,10 @@ const futureDate = (days) =>
   new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 
 export const AdminDataProvider = ({ children }) => {
+  // When Supabase env vars exist, Postgres is the source of truth.
+  // Otherwise the workspace runs on the localStorage demo store.
+  const remote = supabaseReady;
+  const { admin } = useAdminAuth();
   const [data, setData] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -35,10 +56,12 @@ export const AdminDataProvider = ({ children }) => {
     }
   });
   const [toast, setToast] = useState(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
+    if (remote) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [data]);
+  }, [data, remote]);
 
   const notify = useCallback((message, type = "success") => {
     const id = Date.now();
@@ -48,14 +71,64 @@ export const AdminDataProvider = ({ children }) => {
     }, 3400);
   }, []);
 
-  const updateLead = useCallback((id, patch) => {
-    setData((current) => ({
-      ...current,
-      leads: current.leads.map((lead) =>
-        lead.id === id ? { ...lead, ...patch } : lead
-      ),
-    }));
-  }, []);
+  const push = useCallback(
+    (promise, label) => {
+      if (!remote || !promise) return;
+      promise.catch((error) => {
+        console.error(`[supabase] ${label}`, error);
+        notify(
+          `"${label}" could not be saved to Supabase. ${error?.message || ""}`.trim(),
+          "error"
+        );
+      });
+    },
+    [notify, remote]
+  );
+
+  const loadRemote = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!remote) return false;
+      setSyncing(true);
+      try {
+        const remoteData = await fetchAdminData();
+        setData(remoteData);
+        if (!silent) {
+          notify("Cloud workspace reloaded from Supabase.", "info");
+        }
+        return true;
+      } catch (error) {
+        console.error("[supabase] load", error);
+        notify(`Supabase load failed. ${error?.message || ""}`.trim(), "error");
+        return false;
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [notify, remote]
+  );
+
+  useEffect(() => {
+    if (!remote || !admin) return;
+    loadRemote({ silent: true });
+    // Re-load when a different staff member signs in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remote, admin?.email]);
+
+  const updateLead = useCallback(
+    (id, patch) => {
+      if (remote) {
+        const existing = data.leads.find((lead) => lead.id === id);
+        if (existing) push(saveLeadRemote({ ...existing, ...patch }), "Lead update");
+      }
+      setData((current) => ({
+        ...current,
+        leads: current.leads.map((lead) =>
+          lead.id === id ? { ...lead, ...patch } : lead
+        ),
+      }));
+    },
+    [data.leads, push, remote]
+  );
 
   const addLead = useCallback(
     (payload) => {
@@ -88,15 +161,35 @@ export const AdminDataProvider = ({ children }) => {
             ]
           : [],
       };
+      push(saveLeadRemote(lead), "Lead create");
       setData((current) => ({ ...current, leads: [lead, ...current.leads] }));
       notify(`Lead ${id} created for ${lead.name}.`);
       return lead;
     },
-    [data.leads, notify]
+    [data.leads, notify, push, remote]
   );
 
   const addLeadNote = useCallback(
     (id, text, author = "Aarav Mehta") => {
+      const note = {
+        id: `n-${Date.now()}`,
+        author,
+        time: nowLabel(),
+        text,
+      };
+      if (remote) {
+        const existing = data.leads.find((lead) => lead.id === id);
+        if (existing) {
+          push(
+            saveLeadRemote({
+              ...existing,
+              lastContact: text,
+              notes: [note, ...(existing.notes || [])],
+            }),
+            "Lead note"
+          );
+        }
+      }
       setData((current) => ({
         ...current,
         leads: current.leads.map((lead) =>
@@ -104,22 +197,14 @@ export const AdminDataProvider = ({ children }) => {
             ? {
                 ...lead,
                 lastContact: text,
-                notes: [
-                  {
-                    id: `n-${Date.now()}`,
-                    author,
-                    time: nowLabel(),
-                    text,
-                  },
-                  ...lead.notes,
-                ],
+                notes: [note, ...lead.notes],
               }
             : lead
         ),
       }));
       notify("Activity added to the lead timeline.");
     },
-    [notify]
+    [data.leads, notify, push, remote]
   );
 
   const convertLead = useCallback(
@@ -173,26 +258,30 @@ export const AdminDataProvider = ({ children }) => {
         status: "Pending",
         payments: [],
       };
+      const note = {
+        id: `n-${Date.now()}`,
+        author: "System",
+        time: nowLabel(),
+        text: `Application ${applicationId} and student profile ${studentId} created from this lead.`,
+      };
+      const updatedLead = {
+        ...lead,
+        stage: "Application",
+        lastContact: `Converted to application ${applicationId}`,
+        notes: [note, ...lead.notes],
+      };
+
+      if (remote) {
+        push(saveLeadRemote(updatedLead), "Lead convert");
+        push(saveApplicationRemote(application), "Application create");
+        push(saveStudentRemote(student), "Student create");
+        push(saveInvoiceRemote(invoice), "Invoice create");
+      }
 
       setData((current) => ({
         ...current,
         leads: current.leads.map((item) =>
-          item.id === leadId
-            ? {
-                ...item,
-                stage: "Application",
-                lastContact: `Converted to application ${applicationId}`,
-                notes: [
-                  {
-                    id: `n-${Date.now()}`,
-                    author: "System",
-                    time: nowLabel(),
-                    text: `Application ${applicationId} and student profile ${studentId} created from this lead.`,
-                  },
-                  ...item.notes,
-                ],
-              }
-            : item
+          item.id === leadId ? updatedLead : item
         ),
         applications: [application, ...current.applications],
         students: [student, ...current.students],
@@ -201,7 +290,7 @@ export const AdminDataProvider = ({ children }) => {
       notify(`Application ${applicationId} created for ${lead.name}.`);
       return applicationId;
     },
-    [data.applications, data.invoices, data.leads, data.students, notify, updateLead]
+    [data.applications, data.invoices, data.leads, data.students, notify, push, remote, updateLead]
   );
 
   const addTask = useCallback(
@@ -218,21 +307,31 @@ export const AdminDataProvider = ({ children }) => {
         owner: payload.owner || "Aarav Mehta",
         done: false,
       };
+      push(saveTaskRemote(task), "Task create");
       setData((current) => ({ ...current, tasks: [task, ...current.tasks] }));
       notify("Task added to your follow-up list.");
       return task;
     },
-    [data.tasks, notify]
+    [data.tasks, notify, push, remote]
   );
 
-  const toggleTask = useCallback((id) => {
-    setData((current) => ({
-      ...current,
-      tasks: current.tasks.map((task) =>
-        task.id === id ? { ...task, done: !task.done } : task
-      ),
-    }));
-  }, []);
+  const toggleTask = useCallback(
+    (id) => {
+      if (remote) {
+        const existing = data.tasks.find((task) => task.id === id);
+        if (existing) {
+          push(saveTaskRemote({ ...existing, done: !existing.done }), "Task update");
+        }
+      }
+      setData((current) => ({
+        ...current,
+        tasks: current.tasks.map((task) =>
+          task.id === id ? { ...task, done: !task.done } : task
+        ),
+      }));
+    },
+    [data.tasks, push, remote]
+  );
 
   const addStudent = useCallback(
     (payload) => {
@@ -249,11 +348,12 @@ export const AdminDataProvider = ({ children }) => {
         feeStatus: payload.feeStatus || "Pending",
         admissionDate: new Date().toISOString().slice(0, 10),
       };
+      push(saveStudentRemote(student), "Student create");
       setData((current) => ({ ...current, students: [student, ...current.students] }));
       notify(`Student ${student.name} added successfully.`);
       return student;
     },
-    [data.students, notify]
+    [data.students, notify, push, remote]
   );
 
   const addApplication = useCallback(
@@ -271,6 +371,7 @@ export const AdminDataProvider = ({ children }) => {
         docsVerified: false,
         amount: Number(payload.amount) || 0,
       };
+      push(saveApplicationRemote(application), "Application create");
       setData((current) => ({
         ...current,
         applications: [application, ...current.applications],
@@ -278,17 +379,26 @@ export const AdminDataProvider = ({ children }) => {
       notify(`Application ${id} created.`);
       return application;
     },
-    [data.applications, notify]
+    [data.applications, notify, push, remote]
   );
 
-  const updateApplication = useCallback((id, patch) => {
-    setData((current) => ({
-      ...current,
-      applications: current.applications.map((application) =>
-        application.id === id ? { ...application, ...patch } : application
-      ),
-    }));
-  }, []);
+  const updateApplication = useCallback(
+    (id, patch) => {
+      if (remote) {
+        const existing = data.applications.find((application) => application.id === id);
+        if (existing) {
+          push(saveApplicationRemote({ ...existing, ...patch }), "Application update");
+        }
+      }
+      setData((current) => ({
+        ...current,
+        applications: current.applications.map((application) =>
+          application.id === id ? { ...application, ...patch } : application
+        ),
+      }));
+    },
+    [data.applications, push, remote]
+  );
 
   const addInvoice = useCallback(
     (payload) => {
@@ -304,28 +414,36 @@ export const AdminDataProvider = ({ children }) => {
         status: "Pending",
         payments: [],
       };
+      push(saveInvoiceRemote(invoice), "Invoice create");
       setData((current) => ({ ...current, invoices: [invoice, ...current.invoices] }));
       notify(`Invoice ${id} generated.`);
       return invoice;
     },
-    [data.invoices, notify]
+    [data.invoices, notify, push, remote]
   );
 
   const recordPayment = useCallback(
     (invoiceId, payload) => {
       const amount = Number(payload.amount) || 0;
       if (amount <= 0) return;
+      const payment = {
+        id: `PAY-${Date.now()}`,
+        date: payload.date || new Date().toISOString().slice(0, 10),
+        amount,
+        method: payload.method || "UPI",
+        reference: payload.reference || "",
+      };
+      if (remote) {
+        const existing = data.invoices.find((invoice) => invoice.id === invoiceId);
+        if (existing) {
+          const newPaid = Math.min(existing.amount, existing.paid + amount);
+          push(savePaymentRemote(invoiceId, payment, newPaid), "Payment");
+        }
+      }
       setData((current) => ({
         ...current,
         invoices: current.invoices.map((invoice) => {
           if (invoice.id !== invoiceId) return invoice;
-          const payment = {
-            id: `PAY-${Date.now()}`,
-            date: payload.date || new Date().toISOString().slice(0, 10),
-            amount,
-            method: payload.method || "UPI",
-            reference: payload.reference || "",
-          };
           return {
             ...invoice,
             paid: Math.min(invoice.amount, invoice.paid + amount),
@@ -335,7 +453,7 @@ export const AdminDataProvider = ({ children }) => {
       }));
       notify("Payment recorded and receipt updated.");
     },
-    [notify]
+    [data.invoices, notify, push, remote]
   );
 
   const addCatalogItem = useCallback(
@@ -346,6 +464,7 @@ export const AdminDataProvider = ({ children }) => {
         id: `${prefix}${Date.now()}`,
         updatedAt: new Date().toISOString().slice(0, 10),
       };
+      push(saveCatalogItemRemote(type, item), "Catalog create");
       setData((current) => ({
         ...current,
         catalog: {
@@ -356,11 +475,24 @@ export const AdminDataProvider = ({ children }) => {
       notify("New catalog record created.");
       return item;
     },
-    [notify]
+    [notify, push, remote]
   );
 
   const updateCatalogItem = useCallback(
     (type, id, patch) => {
+      if (remote) {
+        const existing = data.catalog[type]?.find((item) => item.id === id);
+        if (existing) {
+          push(
+            saveCatalogItemRemote(type, {
+              ...existing,
+              ...patch,
+              updatedAt: new Date().toISOString().slice(0, 10),
+            }),
+            "Catalog update"
+          );
+        }
+      }
       setData((current) => ({
         ...current,
         catalog: {
@@ -377,11 +509,12 @@ export const AdminDataProvider = ({ children }) => {
         },
       }));
     },
-    [notify]
+    [data.catalog, push, remote]
   );
 
   const deleteCatalogItem = useCallback(
     (type, id) => {
+      push(deleteCatalogItemRemote(type, id), "Catalog delete");
       setData((current) => ({
         ...current,
         catalog: {
@@ -391,7 +524,7 @@ export const AdminDataProvider = ({ children }) => {
       }));
       notify("Catalog record removed.", "info");
     },
-    [notify]
+    [notify, push, remote]
   );
 
   const addContent = useCallback(
@@ -406,15 +539,29 @@ export const AdminDataProvider = ({ children }) => {
         updatedAt: new Date().toISOString().slice(0, 10),
         author: payload.author || "Aarav Mehta",
       };
+      push(saveContentRemote(item), "Content create");
       setData((current) => ({ ...current, content: [item, ...current.content] }));
       notify("Content item drafted.");
       return item;
     },
-    [notify]
+    [notify, push, remote]
   );
 
   const updateContent = useCallback(
     (id, patch) => {
+      if (remote) {
+        const existing = data.content.find((item) => item.id === id);
+        if (existing) {
+          push(
+            saveContentRemote({
+              ...existing,
+              ...patch,
+              updatedAt: new Date().toISOString().slice(0, 10),
+            }),
+            "Content update"
+          );
+        }
+      }
       setData((current) => ({
         ...current,
         content: current.content.map((item) =>
@@ -428,7 +575,7 @@ export const AdminDataProvider = ({ children }) => {
         ),
       }));
     },
-    [notify]
+    [data.content, push, remote]
   );
 
   const addUser = useCallback(
@@ -443,34 +590,48 @@ export const AdminDataProvider = ({ children }) => {
         lastActive: "Invite pending",
         phone: payload.phone || "",
       };
+      push(saveProfileRemote(user), "Team member create");
       setData((current) => ({ ...current, users: [user, ...current.users] }));
       notify(`Invite sent to ${user.email}.`);
       return user;
     },
-    [data.users, notify]
+    [data.users, notify, push, remote]
   );
 
-  const updateUser = useCallback((id, patch) => {
-    setData((current) => ({
-      ...current,
-      users: current.users.map((user) =>
-        user.id === id ? { ...user, ...patch } : user
-      ),
-    }));
-  }, []);
+  const updateUser = useCallback(
+    (id, patch) => {
+      push(updateProfileRemote(id, patch), "Team member update");
+      setData((current) => ({
+        ...current,
+        users: current.users.map((user) =>
+          user.id === id ? { ...user, ...patch } : user
+        ),
+      }));
+    },
+    [push, remote]
+  );
 
-  const updateSettings = useCallback((patch) => {
-    setData((current) => ({
-      ...current,
-      settings: { ...current.settings, ...patch },
-    }));
-  }, []);
+  const updateSettings = useCallback(
+    (patch) => {
+      push(saveSettingsRemote({ ...data.settings, ...patch }), "Settings update");
+      setData((current) => ({
+        ...current,
+        settings: { ...current.settings, ...patch },
+      }));
+    },
+    [data.settings, push, remote]
+  );
 
   const resetDemoData = useCallback(() => {
+    if (remote) {
+      // Never delete cloud data from the browser; just re-read Postgres.
+      loadRemote();
+      return;
+    }
     localStorage.removeItem(STORAGE_KEY);
     setData(cloneSeed());
     notify("Demo data reset to the original seed.", "info");
-  }, [notify]);
+  }, [loadRemote, notify, remote]);
 
   const payments = useMemo(
     () =>
@@ -492,6 +653,9 @@ export const AdminDataProvider = ({ children }) => {
     payments,
     toast,
     notify,
+    remote,
+    syncing,
+    reloadRemote: loadRemote,
     updateLead,
     addLead,
     addLeadNote,

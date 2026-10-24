@@ -113,8 +113,8 @@ const notifications = [
 ];
 
 const AdminLayout = () => {
-  const { admin, logout } = useAdminAuth();
-  const { toast, tasks } = useAdminData();
+  const { admin, logout, authLoading } = useAdminAuth();
+  const { toast, tasks, remote } = useAdminData();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -136,6 +136,14 @@ const AdminLayout = () => {
   }, [menu]);
 
   const openTasks = tasks.filter((task) => !task.done).length;
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <p className="text-sm font-medium text-slate-500">Loading workspace…</p>
+      </div>
+    );
+  }
 
   if (!admin) {
     return <Navigate to="/admin/login" replace />;
@@ -234,13 +242,17 @@ const AdminLayout = () => {
         <Link
           to="/"
           className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold text-slate-400 transition hover:bg-white/5 hover:text-white"
-          title="All demo data is saved in this browser"
+          title={
+            remote
+              ? "Cloud workspace backed by Supabase"
+              : "All demo data is saved in this browser"
+          }
         >
           <span className="inline-flex items-center gap-1.5">
             <ExternalLink className="h-3 w-3" /> Public site
           </span>
           <span className="rounded bg-white/5 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-            Demo
+            {remote ? "Cloud" : "Demo"}
           </span>
         </Link>
         <div className="mt-1 flex items-center gap-2.5 rounded-lg px-2 py-1.5">
@@ -292,10 +304,10 @@ const AdminLayout = () => {
           <div className="hidden items-center gap-2 md:flex">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Demo workspace
+              {remote ? "Supabase workspace" : "Demo workspace"}
             </span>
             <span className="hidden text-[10px] text-slate-400 xl:inline">
-              Data saved in this browser
+              {remote ? "Cloud data · Postgres + RLS" : "Data saved in this browser"}
             </span>
           </div>
 
