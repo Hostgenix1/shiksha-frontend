@@ -103,10 +103,10 @@ on conflict (id) do nothing;
 
 -- Content
 insert into public.content (id, title, type, category, author, status, updated_at) values
-  ('a1', 'Top Engineering Colleges in India 2026', 'Article', 'Rankings', 'Ananya Rao', 'Published', '18 Oct 202'),
-  ('a2', 'How to Crack NEET UG: A 6-Month Study Plan', 'Article', 'Preparation', 'Dr. Vivek Menon', 'Published', '12 Oct 202'),
-  ('a3', 'MBA Specialisations: Which One Fits You?', 'Article', 'Career', 'Rahul Sharma', 'Published', '05 Oct 202'),
-  ('a4', 'Scholarships Every Indian Student Should Know', 'Article', 'Scholarships', 'Neha Kulkarni', 'Published', '28 Sep 202'),
+  ('a1', 'Top Engineering Colleges in India 2026', 'Article', 'Rankings', 'Ananya Rao', 'Published', '2026-10-18'),
+  ('a2', 'How to Crack NEET UG: A 6-Month Study Plan', 'Article', 'Preparation', 'Dr. Vivek Menon', 'Published', '2026-10-12'),
+  ('a3', 'MBA Specialisations: Which One Fits You?', 'Article', 'Career', 'Rahul Sharma', 'Published', '2026-10-05'),
+  ('a4', 'Scholarships Every Indian Student Should Know', 'Article', 'Scholarships', 'Neha Kulkarni', 'Published', '2026-09-28'),
   ('CNT-101', 'IIT Patna MBA review: placements, faculty and campus life', 'Review', 'Student review', 'Ritika Sen', 'Pending', '2026-10-25'),
   ('CNT-102', 'Is JEE Advanced 2027 tougher than last year?', 'Forum', 'Exam discussion', 'Community user', 'Pending', '2026-10-24'),
   ('CNT-103', 'NEET UG 2027: new exam centres announced', 'Article', 'Exam news', 'Shiksha Editorial', 'Draft', '2026-10-23'),
